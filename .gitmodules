@@ -1,0 +1,3 @@
+[submodule "Es15_ProgettoSocket_Server/lib/utility_c"]
+	path = Es15_ProgettoSocket_Server/lib/utility_c
+	url = https://github.com/nboano/UTILITY_C.git
