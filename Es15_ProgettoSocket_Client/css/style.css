@@ -1,0 +1,13 @@
+body {
+    font-family: sans-serif;
+    background-color: #bce3c6;
+}
+
+dialog {
+    border-radius: 8px;
+    border: 1px solid grey;
+}
+
+dialog#dlgServerConnection {
+    background-color: #de9b9b;
+}
