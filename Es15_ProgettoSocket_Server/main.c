@@ -4,16 +4,21 @@
 
 #define PORT 1040
 
+#define JSON_RESPONSE_HEADERS {\
+        {"Access-Control-Allow-Origin", "*"},\
+        {"Content-Type", "application/json; charset=UTF-8"},\
+        {"Connection", "Close"}\
+    }\
+
 const HTTPResponse HTTP_NOT_FOUND = {
-    404, "NOT FOUND",
-    {
-        {"Content-Type", "text/html; charset=UTF-8"},
-        {"Connection", "Close"}
-    },
-    "<h1>Risorsa non trovata.</h1><hr/>Mi dispiace, ma la risorsa che cerchi non &egrave; stata trovata. Ti invitiamo a cercare da un'altra parte &#129392;&#129392;."
+    404, "NOT FOUND", JSON_RESPONSE_HEADERS,
+    "{\"error\":{\"code\":404,\"message\":\"Risorsa non trovata.\"}}"
 };
 
-MYSQL* db_instance;
+const HTTPResponse HTTP_METHOD_NOT_ALLOWED = {
+    405, "METHOD NOT ALLOWED", JSON_RESPONSE_HEADERS,
+    "{\"error\":{\"code\":405,\"message\":\"Metodo HTTP non consentito.\"}}"
+};
 
 NEW_SOCKET(miosock, BUFFER_LEN);
 
@@ -23,21 +28,22 @@ unsigned long ServingThread(void* param) {
 
     HTTPRequest req = HTTP.ReadRequestFromSocket(socket_clone);
     HTTPResponse resp;
+    
 
     printf("%-15s THREAD %-5x - %-5s %-30s %s\n", (char*)param, GetCurrentThreadId(), req.Method, req.Path, req.Body);
 
     if(strcmp(req.Path, "/") == 0) {
 
-        HTTPResponse ok_resp = {
-            200, "OK",
-            {
-                {"Content-Type", "text/html; charset=UTF-8"},
-                {"Connection", "Close"}
-            }
-        };
-        sprintf(ok_resp.Body, "<h1>CIAO %s!</h1><hr>Ma cosa fai? &#128128;&#128128;<br><br>Questa &egrave; un'API.", (char*)param);
+        if(strcmp(req.Method, "POST") == 0) {
+            HTTPResponse ok_resp = {
+                200, "OK",  JSON_RESPONSE_HEADERS
+            };
+            sprintf(ok_resp.Body, "{\"ok\":true,\"data\":{\"ip\":\"%s\"}}", (char*)param);
 
-        resp = ok_resp;
+            resp = ok_resp;
+        } else {
+            resp = HTTP_METHOD_NOT_ALLOWED;
+        }
 
     } else if(0) {
 
@@ -48,10 +54,30 @@ unsigned long ServingThread(void* param) {
     HTTP.SendResponseToSocket(socket_clone, resp);
 }
 
+void login(const char* username, const char* password) {
+    Database.AddParameter("@username", username);
+    Database.AddParameter("@password", password);
+    MYSQL_RES* result = Database.ExecuteQuery("SELECT username FROM autisti WHERE username = @username AND password = @password");
+
+    MYSQL_ROW row = mysql_fetch_row(result);
+    if(row) {
+        printf("LOGIN OK: %s\n", username);
+    } else {
+        printf("LOGIN FALLITO: %s\n", username);
+    }
+
+    mysql_free_result(result);
+}
+
 int main() 
 {
+    DB_Init();
 
-    db_instance = DB_Init();
+    login("consegne001", "consegne001");
+
+    login("consegne002", "consegne002");
+
+    login("consegne005", "consegne005");
 
     char message[50] = "";
     sprintf(message, "In attesa sulla porta %i.", PORT);

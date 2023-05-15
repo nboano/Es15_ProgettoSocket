@@ -1,3 +1,6 @@
 [submodule "Es15_ProgettoSocket_Server/lib/utility_c"]
 	path = Es15_ProgettoSocket_Server/lib/utility_c
 	url = https://github.com/nboano/UTILITY_C.git
+[submodule "Es15_ProgettoSocket_Client/lib/kinderc"]
+	path = Es15_ProgettoSocket_Client/lib/kinderc
+	url = https://github.com/nboano/KinderC.git
