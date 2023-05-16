@@ -10,6 +10,8 @@
         {"Connection", "Close"}\
     }\
 
+#define SESSION_ID_LEN 8
+
 typedef struct t_userdata {
     char Username[50];
     char Nome[50];
@@ -115,7 +117,7 @@ HTTPResponse SERVER_HANDLE_LOGIN(HTTPRequest req) {
                 strcpy(current_session.UserData.Nome, login_row[2]);
                 strcpy(current_session.UserData.Cognome, login_row[3]);
 
-                generate_id(current_session.Token, 25);
+                generate_id(current_session.Token, SESSION_ID_LEN);
 
                 SessionList.Append(current_session);
 
