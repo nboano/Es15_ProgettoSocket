@@ -10,6 +10,15 @@
         {"Connection", "Close"}\
     }\
 
+typedef struct t_sessionhandle {
+    char Username[50];
+    char Token[50];
+} SessionHandle;
+
+LLIST_DECLTYPE(SessionHandle)
+
+LLIST_INIT(SessionList, SessionHandle);
+
 const HTTPResponse HTTP_NOT_FOUND = {
     404, "NOT FOUND", JSON_RESPONSE_HEADERS,
     "{\"ok\":false,\"error\":{\"code\":404,\"message\":\"Risorsa non trovata.\"}}"
@@ -37,21 +46,19 @@ char** perform_login(const char* username, const char* password);
 
 char* generate_id(char *str, int size)
 {
+    srand(time(NULL));
+
     const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJK1234567890#!-+/=@";
-    if (size) {
-        --size;
-        for (int n = 0; n < size; n++) {
-            int key = Random.InRange(0, sizeof(charset));
-            str[n] = charset[key];
-        }
-        str[size] = '\0';
+    size--;
+    for (int n = 0; n < size; n++) {
+        int key = rand() % (int) (sizeof charset - 1);
+        str[n] = charset[key];
     }
+    str[size] = '\0';
     return str;
 }
 
 unsigned long ServingThread(void* param) {
-
-    srand(time(NULL));
 
     SOCKET socket_clone = miosock.ClientSocket;
 
@@ -71,10 +78,14 @@ unsigned long ServingThread(void* param) {
             char** login_row = perform_login(username, password);
 
             if(login_row) {
-                char sid_bf[25] = ""; generate_id(sid_bf, 25);
+                SessionHandle sess_member;
+                strcpy(sess_member.Username, login_row[0]);
+                generate_id(sess_member.Token, 25);
 
-                char resp_bf[255] = "";
-                sprintf(resp_bf, "{\"session_id\":\"%s\",\"username\":\"%s\",\"ruolo\":%s,\"nome\":\"%s\",\"cognome\":\"%s\",\"status\":\"Login successful.\"}", sid_bf, login_row[0], login_row[1], login_row[2], login_row[3]);
+                SessionList.Append(sess_member);
+
+                char resp_bf[512] = "";
+                sprintf(resp_bf, "{\"token\":\"%s\",\"username\":\"%s\",\"ruolo\":%s,\"nome\":\"%s\",\"cognome\":\"%s\",\"status\":\"Login successful.\"}", sess_member.Token, sess_member.Username, login_row[1], login_row[2], login_row[3]);
                 
                 resp = HTTP_BUILD_OK_RESPONSE(resp_bf);
             } else {
