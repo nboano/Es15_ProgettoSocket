@@ -101,7 +101,7 @@ HTTPResponse SERVER_HANDLE_LOGIN(HTTPRequest req) {
         if(current_session_ptr) {
             current_session = *current_session_ptr;
 
-            printf("SESS %s - ", current_session.Token);
+            printf("%s\t\t", current_session.Token);
             Color.Set(Color.Yellow);
             printf("UTENTE %s HA GIA' EFFETTUATO IL LOGIN\n", current_session.UserData.Username);
             Color.Reset();
@@ -121,7 +121,7 @@ HTTPResponse SERVER_HANDLE_LOGIN(HTTPRequest req) {
 
                 SessionList.Append(current_session);
 
-                printf("SESS %s - ", current_session.Token);
+                printf("%s\t\t", current_session.Token);
                 Color.Set(Color.Green);
                 printf("UTENTE %s HA EFFETTUATO IL LOGIN\n", current_session.UserData.Username);
                 Color.Reset();
@@ -133,7 +133,7 @@ HTTPResponse SERVER_HANDLE_LOGIN(HTTPRequest req) {
             } else {
 
                 Color.Set(Color.Red);
-                printf("TENTATIVO LOGIN CON CREDENZIALI ERRATE O MANCANTI\n");
+                printf("\t\tTENTATIVO LOGIN CON CREDENZIALI ERRATE O MANCANTI\n");
                 Color.Reset();
 
                 resp = HTTP_UNAUTHORIZED;
@@ -156,7 +156,7 @@ HTTPResponse SERVER_HANDLE_LOGOUT(HTTPRequest req) {
 
         if(current_session_index != -1) {
 
-            printf("SESS %s - ", SessionList.At(current_session_index)->Token);
+            printf("%s\t\t", SessionList.At(current_session_index)->Token);
 
             SessionList.RemoveAt(current_session_index);
 
@@ -168,7 +168,7 @@ HTTPResponse SERVER_HANDLE_LOGOUT(HTTPRequest req) {
         } else {
 
             Color.Set(Color.Red);
-            printf("TENTATIVO LOGOUT CON CREDENZIALI ERRATE O MANCANTI\n");
+            printf("\t\tTENTATIVO LOGOUT CON CREDENZIALI ERRATE O MANCANTI\n");
             Color.Reset();
 
             resp = HTTP_UNAUTHORIZED;
@@ -177,4 +177,22 @@ HTTPResponse SERVER_HANDLE_LOGOUT(HTTPRequest req) {
         resp = HTTP_METHOD_NOT_ALLOWED;
     }
     return resp;
+}
+
+HTTPResponse SERVER_HANDLE_REQUEST(HTTPRequest req) {
+
+    if(strcmp(req.Path, "/") == 0)
+        return HTTP_BUILD_OK_RESPONSE("{\"server_up\":true}");
+
+    if(strcmp(req.Path, "/login") == 0)
+        return SERVER_HANDLE_LOGIN(req);
+
+    if(strcmp(req.Path, "/logout") == 0)
+        return SERVER_HANDLE_LOGOUT(req);
+
+    if(strcmp(req.Path, "/log-location"))
+        return HTTP_NOT_FOUND;
+
+    return HTTP_NOT_FOUND;
+
 }

@@ -12,40 +12,54 @@ unsigned long ServingThread(void* param) {
     SOCKET socket_clone = miosock.ClientSocket;
 
     HTTPRequest req = HTTP.ReadRequestFromSocket(socket_clone);
-    HTTPResponse resp;
-    
-    printf("-> %-15s THREAD %-5x - %-5s %-30s %s\n", (char*)param, GetCurrentThreadId(), req.Method, req.Path, req.Body);
 
-    if(strcmp(req.Path, "/") == 0) {
-        resp = HTTP_BUILD_OK_RESPONSE("{\"server_up\":true}");
-    }
-    else if(strcmp(req.Path, "/login") == 0) {
-        resp = SERVER_HANDLE_LOGIN(req);
-    } 
-    else if(strcmp(req.Path, "/logout") == 0) {
-        resp = SERVER_HANDLE_LOGOUT(req);
-    } else {
-        resp = HTTP_NOT_FOUND;
-    }
+    time_t t = time(NULL);
+    struct tm* tm = localtime(&t);
+    printf("%d-%02d-%02d %02d:%02d:%02d ", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+    printf("%-15s THREAD %-5x - %-5s %-15s\n", (char*)param, GetCurrentThreadId(), req.Method, req.Path);
+
+    HTTPResponse resp = SERVER_HANDLE_REQUEST(req);
 
     HTTP.SendResponseToSocket(socket_clone, resp);
 }
 
+void print_vline() {
+    int console_h = Console.GetHeight();
+    int l = Console.GetWidth() - 32;
+
+    Console.SetCursorPosition(l, 0);
+    for(int i = 0; i < console_h; i++) {
+        printf("%c", 221);
+        Console.SetCursorPosition(l, i);
+    }
+}
+
 int main() 
 {
+
+    print_vline();
+
     Database.Connect();
 
-    char message[50] = "";
-    sprintf(message, "In attesa sulla porta %i.", PORT);
+    Console.SetCursorPosition(Console.GetWidth() - 30, 1);
 
-    Console.SetCursorPosition(Console.GetWidth() - strlen(message) ,0);
-
-    printf(message);
-
-    Console.SetCursorPosition(0,1);
+    printf("DATABASE : ");
+    Color.Set(Color.Green);
+    printf("CONNESSO");
+    Color.Reset();
 
     miosock.Init();
     miosock.Listen(PORT);
+
+    Console.SetCursorPosition(Console.GetWidth() - 30, 0);
+    printf("SERVER   : ");
+    Color.Set(Color.Green);
+    printf("OPERATIVO @ ");
+    Color.Set(Color.Aqua);
+    printf("%i", PORT);
+    Color.Reset();
+
+    Console.SetCursorPosition(0,0);
     
     while(true) {
         Sleep(10);
