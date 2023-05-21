@@ -195,6 +195,38 @@ HTTPResponse SERVER_HANDLE_LOGOUT(HTTPRequest req) {
     return resp;
 }
 
+HTTPResponse SERVER_HANDLE_LOCATION_UPDATE(HTTPRequest req) {
+    if(strcmp(req.Method, "POST") != 0) return HTTP_METHOD_NOT_ALLOWED;
+
+    char* username = strtok(req.Body, ";");
+    glob_username_q = username;
+
+    char* token = strtok(NULL, ";");
+
+    int current_session_index = SessionList.FindIndex(Session_FindCurrentUser_CB);
+
+    if(current_session_index != -1 && strcmp(token, SessionList.At(current_session_index)->Token) == 0) {
+
+        float lat = atof(strtok(NULL, ";"));
+        float lon = atof(strtok(NULL, ";"));
+
+        printf("%s\t\t", token);
+
+        Color.Set(Color.Green);
+        printf("%s aggiorna posizione: %f,%f\n", username, lat, lon);
+        Color.Reset();
+
+        return HTTP_BUILD_OK_RESPONSE("{\"Status\":\"Posizione aggiornata correttamente.\"}");
+    } else {
+
+        Color.Set(Color.Red);
+        printf("\t\tTENTATIVO AGG.POSIZIONE CON CREDENZIALI ERRATE O MANCANTI\n");
+        Color.Reset();
+
+        return HTTP_UNAUTHORIZED;
+    }
+}
+
 HTTPResponse SERVER_HANDLE_REQUEST(HTTPRequest req) {
 
     if(strcmp(req.Path, "/") == 0)
@@ -206,8 +238,8 @@ HTTPResponse SERVER_HANDLE_REQUEST(HTTPRequest req) {
     if(strcmp(req.Path, "/logout") == 0)
         return SERVER_HANDLE_LOGOUT(req);
 
-    if(strcmp(req.Path, "/log-location"))
-        return HTTP_NOT_FOUND;
+    if(strcmp(req.Path, "/update-location") == 0)
+        return SERVER_HANDLE_LOCATION_UPDATE(req);
 
     return HTTP_NOT_FOUND;
 
