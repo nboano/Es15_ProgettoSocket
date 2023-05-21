@@ -28,6 +28,9 @@ LLIST_DECLTYPE(SessionHandle)
 
 LLIST_INIT(SessionList, SessionHandle);
 
+HTTPResponse SERVER_HANDLE_LOGIN(HTTPRequest req);
+HTTPResponse SERVER_HANDLE_LOGOUT(HTTPRequest req);
+
 char** perform_login(const char* username, const char* password) {
 
     Database.AddParameter("@username", username);
@@ -101,12 +104,25 @@ HTTPResponse SERVER_HANDLE_LOGIN(HTTPRequest req) {
         if(current_session_ptr) {
             current_session = *current_session_ptr;
 
-            printf("%s\t\t", current_session.Token);
-            Color.Set(Color.Yellow);
-            printf("UTENTE %s HA GIA' EFFETTUATO IL LOGIN\n", current_session.UserData.Username);
-            Color.Reset();
+            if(perform_login(username, password)) {
+                char resp_bf[512] = "";
+                sprintf(resp_bf, "{\"Token\":\"%s\",\"Username\":\"%s\",\"Ruolo\":%i,\"Nome\":\"%s\",\"Cognome\":\"%s\",\"Status\":\"Sessione ripresa.\"}", current_session.Token, current_session.UserData.Username, current_session.UserData.Ruolo, current_session.UserData.Nome, current_session.UserData.Cognome);
+                
+                resp = HTTP_BUILD_OK_RESPONSE(resp_bf);
 
-            resp = HTTP_ALREADY_LOGGED_IN;
+                printf("%s\t\t", current_session.Token);
+                Color.Set(Color.Yellow);
+                printf("UTENTE %s RIPRENDE LA SESSIONE\n", current_session.UserData.Username);
+                Color.Reset();
+            } else {
+                resp = HTTP_UNAUTHORIZED;
+
+                printf("%s\t\t", current_session.Token);
+                Color.Set(Color.Red);
+                printf("TENTATIVO RIPRESA SESSIONE CON CREDENZIALI ERRATE O MANCANTI\n");
+                Color.Reset();
+            }
+            //resp = HTTP_ALREADY_LOGGED_IN;
         } else {
 
             char** login_row = perform_login(username, password);
