@@ -26,3 +26,10 @@ header {
     justify-content: space-between;
     align-items: center;
 }
+
+screen {
+    display: none;
+    height: fit-content;
+    width: calc(100vw - 30px);
+    padding: 15px;
+}
