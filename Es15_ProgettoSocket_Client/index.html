@@ -12,15 +12,56 @@
     <assembly src="main.wasm"></assembly>
 </head>
 <body>
+
+    <header>
+        <div><small id="statusBar"></small></div>
+        <div id="topUserBar"></div>
+        <div>
+            <button id="btnLogout">Logout</button>
+        </div>
+    </header>
+
+    <main>
+        
+    </main>
+
+    <dialog id="dlgConnectionStatus">
+        <h3></h3>
+        <br>
+        <form method="dialog"><button>Chiudi</button></form>
+    </dialog>
     
     <dialog id="dlgServerConnection">
         <table border="0">
             <tr>
                 <td>
-                    <img src="img/network-icon.png" alt="" style="width: 128px;">
+                    <img src="img/network-icon.png" alt="" style="width: 128px; padding: 10px; max-width: 15vw;">
                 </td>
                 <td>
                     <h4>Connessione al server</h4>
+
+                    <form action="./" id="frmLogin">
+                        <table border="0">
+                            <tr>
+                                <td><label for="txtServerAddress">Indirizzo: </label></td>
+                                <td>
+                                    <input type="text" id="txtServerAddress" required value="127.0.0.1:1040" style="width: 120px;">
+                                    <button type="button" id="btnConnectionTest">Test</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><label for="txtUsername">Username: </label></td>
+                                <td><input type="text" id="txtUsername" required></td>
+                            </tr>
+                            <tr>
+                                <td><label for="txtPassword">Password: </label></td>
+                                <td><input type="password" id="txtPassword" required></td>
+                            </tr>
+                            <tr>
+                                <td colspace="2"><br><button type="button" id="btnFrmLogin">Login</button></td>
+                            </tr>
+                        </table>
+                    </form>
                 </td>
             </tr>
         </table>

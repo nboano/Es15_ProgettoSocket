@@ -1,0 +1,1 @@
+lib/kinderc/kccompile src/main.cpp main.wasm
