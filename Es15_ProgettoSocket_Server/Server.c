@@ -209,22 +209,24 @@ HTTPResponse SERVER_HANDLE_LOCATION_UPDATE(HTTPRequest req) {
 
         const char* lat = strtok(NULL, ";");
         const char* lon = strtok(NULL, ";");
-        const char* altitude = strtok(NULL, ";");
+        const char* speed = strtok(NULL, ";");
         const char* heading = strtok(NULL, ";");
+        const char* altitude = strtok(NULL, ";");
 
         printf("%s\t\t", token);
 
         Color.Set(Color.Green);
-        printf("%s aggiorna posizione: %s,%s %sm %sdeg\n", username, lat, lon, altitude, heading);
+        printf("%s aggiorna posizione: %s,%s %s m/s %s m %s deg\n", username, lat, lon, speed, altitude, heading);
         Color.Reset();
 
         Database.AddParameter("@Username", username);
         Database.AddParameter("@UltimaLatitudine", lat);
         Database.AddParameter("@UltimaLongitudine", lon);
-        Database.AddParameter("@UltimaAltitudine", altitude);
+        Database.AddParameter("@UltimaVelocita", speed);
         Database.AddParameter("@UltimaDirezione", heading);
+        Database.AddParameter("@UltimaAltitudine", altitude);
 
-        Database.ExecuteQuery("UPDATE autisti SET UltimaLatitudine = @UltimaLatitudine, UltimaLongitudine = @UltimaLongitudine, UltimaAltitudine = @UltimaAltitudine, UltimaDirezione = @UltimaDirezione WHERE Username = @Username");
+        Database.ExecuteQuery("UPDATE autisti SET UltimaLatitudine = @UltimaLatitudine, UltimaLongitudine = @UltimaLongitudine, UltimaVelocita = @UltimaVelocita, UltimaDirezione = @UltimaDirezione, UltimaAltitudine = @UltimaAltitudine WHERE Username = @Username");
 
         time_t t = time(NULL);
         struct tm* tm = localtime(&t);
