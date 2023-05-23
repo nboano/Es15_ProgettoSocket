@@ -207,16 +207,32 @@ HTTPResponse SERVER_HANDLE_LOCATION_UPDATE(HTTPRequest req) {
 
     if(current_session_index != -1 && strcmp(token, SessionList.At(current_session_index)->Token) == 0) {
 
-        float lat = atof(strtok(NULL, ";"));
-        float lon = atof(strtok(NULL, ";"));
+        const char* lat = strtok(NULL, ";");
+        const char* lon = strtok(NULL, ";");
+        const char* altitude = strtok(NULL, ";");
+        const char* heading = strtok(NULL, ";");
 
         printf("%s\t\t", token);
 
         Color.Set(Color.Green);
-        printf("%s aggiorna posizione: %f,%f\n", username, lat, lon);
+        printf("%s aggiorna posizione: %s,%s %sm %sdeg\n", username, lat, lon, altitude, heading);
         Color.Reset();
 
-        return HTTP_BUILD_OK_RESPONSE("{\"Status\":\"Posizione aggiornata correttamente.\"}");
+        Database.AddParameter("@Username", username);
+        Database.AddParameter("@UltimaLatitudine", lat);
+        Database.AddParameter("@UltimaLongitudine", lon);
+        Database.AddParameter("@UltimaAltitudine", altitude);
+        Database.AddParameter("@UltimaDirezione", heading);
+
+        Database.ExecuteQuery("UPDATE autisti SET UltimaLatitudine = @UltimaLatitudine, UltimaLongitudine = @UltimaLongitudine, UltimaAltitudine = @UltimaAltitudine, UltimaDirezione = @UltimaDirezione WHERE Username = @Username");
+
+        time_t t = time(NULL);
+        struct tm* tm = localtime(&t);
+
+        char bf[128] = "";
+        sprintf(bf, "{\"Status\":\"POS OK %02d:%02d:%02d\"}", tm->tm_hour, tm->tm_min, tm->tm_sec);
+
+        return HTTP_BUILD_OK_RESPONSE(bf);
     } else {
 
         Color.Set(Color.Red);
