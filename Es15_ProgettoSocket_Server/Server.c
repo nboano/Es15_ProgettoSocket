@@ -226,7 +226,7 @@ HTTPResponse SERVER_HANDLE_LOCATION_UPDATE(HTTPRequest req) {
         Database.AddParameter("@UltimaDirezione", heading);
         Database.AddParameter("@UltimaAltitudine", altitude);
 
-        Database.ExecuteQuery("UPDATE autisti SET UltimaLatitudine = @UltimaLatitudine, UltimaLongitudine = @UltimaLongitudine, UltimaVelocita = @UltimaVelocita, UltimaDirezione = @UltimaDirezione, UltimaAltitudine = @UltimaAltitudine WHERE Username = @Username");
+        Database.ExecuteQuery("UPDATE autisti SET UltimaLatitudine = @UltimaLatitudine, UltimaLongitudine = @UltimaLongitudine, UltimaVelocita = @UltimaVelocita, UltimaDirezione = @UltimaDirezione, UltimaAltitudine = @UltimaAltitudine, DataOraUltimaPosizione = CURRENT_TIMESTAMP() WHERE Username = @Username");
 
         time_t t = time(NULL);
         struct tm* tm = localtime(&t);
@@ -239,6 +239,46 @@ HTTPResponse SERVER_HANDLE_LOCATION_UPDATE(HTTPRequest req) {
 
         Color.Set(Color.Red);
         printf("\t\tTENTATIVO AGG.POSIZIONE CON CREDENZIALI ERRATE O MANCANTI\n");
+        Color.Reset();
+
+        return HTTP_UNAUTHORIZED;
+    }
+}
+
+HTTPResponse SERVER_HANDLE_POSITIONS_REQUEST(HTTPRequest req) {
+    if(strcmp(req.Method, "POST") != 0) return HTTP_METHOD_NOT_ALLOWED;
+
+    char* username = strtok(req.Body, ";");
+    glob_username_q = username;
+
+    char* token = strtok(NULL, ";");
+
+    int current_session_index = SessionList.FindIndex(Session_FindCurrentUser_CB);
+
+    if(current_session_index != -1 && strcmp(token, SessionList.At(current_session_index)->Token) == 0) {
+
+        if(SessionList.At(current_session_index)->UserData.Ruolo == 1) {
+
+            printf("%s\t\t", token);
+
+            Color.Set(Color.Green);
+            printf("%s RICHIEDE LE POSIZIONI\n", username);
+            Color.Reset();
+
+            MYSQL_RES* result = Database.ExecuteQuery("SELECT JSON_ARRAYAGG(JSON_OBJECT('Nome', Nome, 'Cognome', Cognome, 'Username', Username, 'UltimaLatitudine', UltimaLatitudine, 'UltimaLongitudine', UltimaLongitudine, 'UltimaVelocita', UltimaVelocita, 'UltimaDirezione', UltimaDirezione, 'UltimaAltitudine', UltimaAltitudine, 'DataOraUltimaPosizione', DataOraUltimaPosizione)) FROM autisti WHERE ruolo = 0");
+
+            MYSQL_ROW row = mysql_fetch_row(result);
+
+            mysql_free_result(result);
+
+            return HTTP_BUILD_OK_RESPONSE(row[0]);
+
+        } else return HTTP_UNAUTHORIZED;
+
+    } else {
+
+        Color.Set(Color.Red);
+        printf("\t\tTENTATIVO RICH.POSIZIONI CON CREDENZIALI ERRATE O MANCANTI\n");
         Color.Reset();
 
         return HTTP_UNAUTHORIZED;
@@ -258,6 +298,10 @@ HTTPResponse SERVER_HANDLE_REQUEST(HTTPRequest req) {
 
     if(strcmp(req.Path, "/update-location") == 0)
         return SERVER_HANDLE_LOCATION_UPDATE(req);
+
+    if(strcmp(req.Path, "/get-locations") == 0) {
+        return SERVER_HANDLE_POSITIONS_REQUEST(req);
+    }
 
     return HTTP_NOT_FOUND;
 
