@@ -31,5 +31,5 @@ screen {
     display: none;
     height: fit-content;
     width: calc(100vw - 30px);
-    padding: 15px;
+    padding: 0;
 }

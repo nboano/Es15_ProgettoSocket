@@ -23,8 +23,24 @@
 
     <main>
         <screen main></screen>
-        <screen id="consegne">CONSEGNE</screen>
-        <screen id="controllo">CONTROLLO</screen>
+        <screen id="consegne">
+            <div style="padding: 10px; text-align: center;">
+                <small>
+                    <b id="currentLatitude"></b> &deg;
+                    <b id="currentLongitude"></b> &deg;
+                </small><br>
+
+                <b id="currentSpeed"></b> km/h
+                <b id="currentDirection"></b> &deg;
+                <b id="currentAltitude"></b> m
+            </div>
+            <MapControl id="consegneMap" style="width: 100vw; height: calc(100vh - 150px);">
+
+            </MapControl>
+        </screen>
+        <screen id="controllo">
+            <div id="controlloContainer"></div>
+        </screen>
     </main>
 
     <dialog id="dlgConnectionStatus">

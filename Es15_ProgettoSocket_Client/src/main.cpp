@@ -19,6 +19,7 @@ void frmLogin_Submit(HTMLElement&) {
 int main() {
 
     Application::UseScreens();
+    MapControl::Use();
 
     btnConnectionTest.onclick = btnConnectionTest_Click;
     btnFrmLogin.onclick = frmLogin_Submit;
