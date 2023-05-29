@@ -2,6 +2,7 @@
 #include "../lib/kinderc/kinderc.hpp"
 
 #include "User.cpp"
+#include "MapControl.cpp"
 
 #define txtServerAddress HTMLInputElement($("#txtServerAddress"))
 #define txtUsername HTMLInputElement($("#txtUsername"))
@@ -28,36 +29,6 @@ void InitControllo();
 
 int GeolocationInterval = 5000;
 
-
-
-class MapControl : public Control<MapControl> {
-    private:
-
-    static const char* GetOpenStreetMapEmbedURL(double lat, double lon, double zoom) {
-        zoom = 1 / zoom;
-        zoom *= 1e-3;
-
-        static char mbf[128];
-        strcpy(mbf, "");
-        sprintf(mbf, "https://www.openstreetmap.org/export/embed.html?bbox=%f,%f,%f,%f&layer=mapnik&marker=%f,%f", lon - zoom, lat - zoom, lon + zoom, lat + zoom, lat, lon);
-        return mbf;
-    }
-
-    public:
-    ControlInit(MapControl);
-
-    void Update(double latitude, double longitude, double zoomlevel) {
-        char bf[200] = "";
-        sprintf(bf, "<iframe src='%s' style='display: block; border: 0; width: 100%%; height: 100%%;'></iframe>", GetOpenStreetMapEmbedURL(latitude, longitude, zoomlevel));
-        innerHTML = bf;
-    }
-
-    string Render() {
-        style["display"] = "block";
-        style["overflow"] = "hidden";
-        return "";
-    }
-};
 
 class Server {
     private:
@@ -151,15 +122,24 @@ class Server {
         UserData user_data =  GetUserData();
         _AsyncRequest("POST", "/get-locations", String::Format("%s;%s", user_data.Username, user_data.Token), [](Request& r) {
             if(r.status >= 200 && r.status <= 299) {
-                List<GeolocatedUserData> lst = JSON::DeserializeArrayAs<GeolocatedUserData>(r.ToJSONObject()["data"]);
+                const char* users_geoloc_json = r.ToJSONObject()["data"];
+
+                List<GeolocatedUserData> lst = JSON::DeserializeArrayAs<GeolocatedUserData>(users_geoloc_json);
+
+                free((void*)users_geoloc_json);
 
                 string rhtml = "";
                 for(GeolocatedUserData ud: lst) {
-                    rhtml += string::Format("%s %f %f %s<br>",ud.Username, ud.UltimaLatitudine, ud.UltimaLongitudine, ud.DataOraUltimaPosizione);
+                    rhtml += string::Format("<br>&nbsp;%s %s <b>%s</b> %f %f %s<br><br><iframe src='%s' style='display: block; border: 0; width: 100vw; height: 20vh;'></iframe><br>",ud.Nome, ud.Cognome,ud.Username, ud.UltimaLatitudine, ud.UltimaLongitudine, ud.DataOraUltimaPosizione, MapControl::GetOpenStreetMapEmbedURL(ud.UltimaLatitudine, ud.UltimaLongitudine, 0.1));
                 }
-
-                Console::Write("UPD");
+                                
                 $("#controlloContainer").innerHTML = rhtml;
+
+                // for(GeolocatedUserData ud: lst) {
+                //     Console::Write("%s %f %f %s<br>",ud.Username, ud.UltimaLatitudine, ud.UltimaLongitudine, ud.DataOraUltimaPosizione);
+                // }
+
+                Console::Write("UPDATED");
             } else {
                 ShowStatusModal(JSON::DeserializeObject(r.ToJSONObject()["error"])["message"]);
             }
@@ -210,8 +190,6 @@ void DisplayAllPositions(void*);
 void PositionChangeHandler(GeolocationData gd) {
     UpdatePositionInfo(gd);
     Server::UpdateLocationAsync(gd);
-
-    setTimeout(RequestPosition, GeolocationInterval);
 }
 
 void PositionErrorHandler(GeolocationError ge) {
@@ -224,14 +202,15 @@ void RequestPosition(void*) {
 
 void DisplayAllPositions(void*) {
     Server::GetPositionsAsync();
-    setTimeout(DisplayAllPositions, GeolocationInterval);
 }
 
 void InitConsegne() {
     Geolocation::HighAccuracy = true;
     RequestPosition(nullptr);
+    setInterval(RequestPosition, GeolocationInterval);
 }
 
 void InitControllo() {
     DisplayAllPositions(nullptr);
+    setInterval(DisplayAllPositions, GeolocationInterval);
 }

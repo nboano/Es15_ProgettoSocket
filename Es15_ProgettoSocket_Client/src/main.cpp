@@ -18,6 +18,10 @@ void frmLogin_Submit(HTMLElement&) {
 
 int main() {
 
+    Memory::Grow(48);
+
+    JavaScript::LogCommands();
+
     Application::UseScreens();
     MapControl::Use();
 
